@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Blade Designs</title>
+<style>
+:root{
+  --bg:#fafafa;
+  --card:#ffffff;
+  --accent:#f1641e;
+  --text:#333;
+  --shadow:0 10px 25px rgba(0,0,0,0.08);
+  --radius:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,Segoe UI,Roboto;}
+body{background:var(--bg);color:var(--text);scroll-behavior:smooth;}
+header{
+  position:sticky;top:0;z-index:999;
+  background:#fff;box-shadow:var(--shadow);
+  padding:15px 25px;display:flex;justify-content:space-between;align-items:center;
+}
+header h1{color:var(--accent);}
+nav a{
+  margin-left:20px;text-decoration:none;color:var(--text);font-weight:600;
+}
+nav a:hover{color:var(--accent);}
+.cart-count{
+  background:var(--accent);color:#fff;border-radius:50%;
+  padding:5px 10px;margin-left:6px;font-size:14px;
+}
+section{padding:60px 20px;max-width:1200px;margin:auto;}
+.hero{
+  background:linear-gradient(120deg,#ffe0d2,#fff);
+  padding:80px 20px;border-radius:var(--radius);
+  text-align:center;box-shadow:var(--shadow);
+}
+.hero h2{font-size:40px;margin-bottom:10px;}
+.hero p{font-size:18px;margin-bottom:20px;}
+.button{
+  padding:12px 20px;background:var(--accent);color:#fff;border:none;
+  border-radius:var(--radius);cursor:pointer;font-weight:bold;
+}
+.grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
+  gap:25px;margin-top:30px;
+}
+.card{
+  background:var(--card);border-radius:var(--radius);
+  box-shadow:var(--shadow);overflow:hidden;transition:0.3s;
+}
+.card:hover{transform:translateY(-5px);}
+.card img{width:100%;height:200px;object-fit:cover;}
+.card-content{padding:15px;}
+.card-content h3{margin-bottom:8px;}
+.card-content p{font-size:14px;margin-bottom:10px;}
+.search-filter{display:flex;gap:10px;margin-bottom:20px;}
+input,select{
+  padding:10px;border-radius:var(--radius);border:1px solid #ddd;width:100%;
+}
+.modal{
+  position:fixed;inset:0;background:rgba(0,0,0,0.5);
+  display:none;align-items:center;justify-content:center;
+}
+.modal-content{
+  background:#fff;padding:25px;border-radius:var(--radius);
+  width:90%;max-width:500px;box-shadow:var(--shadow);
+}
+.modal img{width:100%;border-radius:var(--radius);margin-bottom:15px;}
+.cart{
+  background:#fff;padding:20px;border-radius:var(--radius);box-shadow:var(--shadow);
+}
+.cart-item{display:flex;justify-content:space-between;margin-bottom:10px;}
+.toast{
+  position:fixed;bottom:20px;right:20px;background:var(--accent);
+  color:#fff;padding:12px 20px;border-radius:var(--radius);
+  display:none;
+}
+footer{text-align:center;padding:40px;color:#777;}
+.downloads{background:#e8ffe8;padding:20px;border-radius:var(--radius);margin-bottom:20px;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Blade Designs</h1>
+  <nav>
+    <a href="#home">Home</a>
+    <a href="#shop">Shop</a>
+    <a href="#cart">Cart <span class="cart-count" id="cartCount">0</span></a>
+    <a href="#about">About</a>
+  </nav>
+</header>
+
+<section id="home">
+  <div class="hero">
+    <h2>Welcome to Blade Designs</h2>
+    <p>Unique digital and physical creations crafted with care.</p>
+    <a href="#shop"><button class="button">Shop Now</button></a>
+  </div>
+  <h2 style="margin-top:40px;">Featured</h2>
+  <div class="grid" id="featured"></div>
+</section>
+
+<section id="shop">
+  <h2>Shop</h2>
+  <div class="search-filter">
+    <input type="text" id="search" placeholder="Search products..."/>
+    <select id="filter">
+      <option value="all">All Categories</option>
+      <option value="stickers">Stickers</option>
+      <option value="digital">Digital</option>
+    </select>
+  </div>
+  <div class="grid" id="products"></div>
+</section>
+
+<section id="cart">
+  <h2>Your Cart</h2>
+  <div class="downloads" id="downloads" style="display:none;"></div>
+  <div class="cart" id="cartItems"></div>
+  <h3>Total: $<span id="total">0</span></h3>
+  <button class="button" onclick="checkout()">Checkout</button>
+</section>
+
+<section id="about">
+  <h2>About Blade Designs</h2>
+  <p>Handmade creativity and digital designs for everyone. Powered by passion.</p>
+</section>
+
+<footer>© Blade Designs</footer>
+
+<div class="modal" id="modal">
+  <div class="modal-content" id="modalContent"></div>
+</div>
+
+<div class="toast" id="toast">Added to cart</div>
+
+<script>
+const stripeLink = "https://buy.stripe.com/test_link_here";
+
+const products = [
+  {
+    id: 1,
+    title: "Sticker Pack",
+    price: 5,
+    category: "stickers",
+    type: "physical",
+    image: "https://via.placeholder.com/300",
+    description: "High quality stickers"
+  },
+  {
+    id: 2,
+    title: "Phone Wallpaper",
+    price: 3,
+    category: "digital",
+    type: "digital",
+    image: "https://via.placeholder.com/300",
+    download: "downloads/wallpaper.zip",
+    description: "HD wallpaper download"
+  }
+];
+
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+function saveCart(){localStorage.setItem("cart",JSON.stringify(cart));updateCartCount();}
+function updateCartCount(){document.getElementById("cartCount").innerText = cart.length;}
+function showToast(){const t=document.getElementById("toast");t.style.display="block";setTimeout(()=>t.style.display="none",2000);}
+
+function renderProducts(list){
+  const container=document.getElementById("products");
+  container.innerHTML="";
+  list.forEach(p=>{
+    container.innerHTML+=`
+    <div class="card" onclick="openModal(${p.id})">
+      <img src="${p.image}">
+      <div class="card-content">
+        <h3>${p.title}</h3>
+        <p>$${p.price}</p>
+      </div>
+    </div>`;
+  });
+}
+
+function renderFeatured(){renderProducts(products.slice(0,2));}
+
+function openModal(id){
+  const p=products.find(x=>x.id===id);
+  document.getElementById("modalContent").innerHTML=`
+    <img src="${p.image}">
+    <h3>${p.title}</h3>
+    <p>${p.description}</p>
+    <p><b>$${p.price}</b></p>
+    ${p.type==="digital"?"<p><i>Instant download after payment</i></p>":""}
+    <button class="button" onclick="addToCart(${p.id})">Add to Cart</button>
+  `;
+  document.getElementById("modal").style.display="flex";
+}
+
+window.onclick=e=>{if(e.target.id==="modal")e.target.style.display="none";}
+
+function addToCart(id){
+  cart.push(id);
+  saveCart();
+  showToast();
+}
+
+function renderCart(){
+  const c=document.getElementById("cartItems");
+  c.innerHTML="";
+  let total=0;
+  cart.forEach((id,i)=>{
+    const p=products.find(x=>x.id===id);
+    total+=p.price;
+    c.innerHTML+=`
+      <div class="cart-item">
+        ${p.title} - $${p.price}
+        <button onclick="removeItem(${i})">Remove</button>
+      </div>`;
+  });
+  document.getElementById("total").innerText=total;
+}
+
+function removeItem(i){cart.splice(i,1);saveCart();renderCart();}
+
+function checkout(){window.location.href=stripeLink;}
+
+function checkSuccess(){
+  if(window.location.search.includes("success=true")){
+    const d=document.getElementById("downloads");
+    d.style.display="block";
+    d.innerHTML="<h3>Your Downloads</h3>";
+    cart.forEach(id=>{
+      const p=products.find(x=>x.id===id);
+      if(p.type==="digital"){
+        d.innerHTML+=`<a href="${p.download}" download><button class="button">${p.title}</button></a><br><br>`;
+      }
+    });
+    cart=[];saveCart();renderCart();
+  }
+}
+
+document.getElementById("search").addEventListener("input",e=>{
+  const val=e.target.value.toLowerCase();
+  renderProducts(products.filter(p=>p.title.toLowerCase().includes(val)));
+});
+
+document.getElementById("filter").addEventListener("change",e=>{
+  const val=e.target.value;
+  renderProducts(val==="all"?products:products.filter(p=>p.category===val));
+});
+
+renderProducts(products);
+renderFeatured();
+renderCart();
+updateCartCount();
+checkSuccess();
+</script>
+
+</body>
+</html>
