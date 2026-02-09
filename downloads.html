@@ -18,7 +18,7 @@ a button{width:100%;margin-top:5px;text-align:left}
 <div class="box">
   <h2>Enter Your Order Reference</h2>
   <input id="orderRef" placeholder="ORDER-123456789">
-  <button onclick="checkDownloads()">Show Downloads</button>
+  <button onclick="showDownloads()">Show Downloads</button>
 </div>
 
 <div id="downloads" class="box hidden">
@@ -27,8 +27,7 @@ a button{width:100%;margin-top:5px;text-align:left}
 </div>
 
 <script>
-// ✅ Check paid orders and show downloads
-function checkDownloads(){
+function showDownloads(){
   const ref = document.getElementById("orderRef").value.trim();
   if(!ref){alert("Enter your order reference"); return;}
 
@@ -39,7 +38,9 @@ function checkDownloads(){
   let html="";
   order.items.forEach(item=>{
     if(item.type==="digital"){
-      html+=`<a href="${item.download}" download><button>Download ${item.title}</button></a><br><br>`;
+      // Handle base64 or URL
+      let href = item.image.startsWith("data:") ? item.image : item.download;
+      html+=`<a href="${href}" download="${item.title}"><button>Download ${item.title}</button></a><br><br>`;
     }
   });
 
