@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Blade Designs Downloads</title>
+<style>
+body{font-family:sans-serif;background:#f6f6f6;padding:20px}
+.box{background:#fff;padding:20px;border-radius:10px;max-width:500px;margin:auto;margin-top:50px;box-shadow:0 4px 10px rgba(0,0,0,.1)}
+input{width:100%;padding:10px;margin:10px 0;border-radius:8px;border:1px solid #ccc}
+button{padding:10px;width:100%;border:none;border-radius:8px;background:#222;color:#fff;cursor:pointer;margin-top:5px}
+.hidden{display:none}
+a button{width:100%;margin-top:5px;text-align:left}
+</style>
+</head>
+<body>
+
+<div class="box">
+  <h2>Enter Your Order Reference</h2>
+  <input id="orderRef" placeholder="ORDER-123456789">
+  <button onclick="checkDownloads()">Show Downloads</button>
+</div>
+
+<div id="downloads" class="box hidden">
+  <h3>Your Digital Downloads</h3>
+  <div id="downloadLinks"></div>
+</div>
+
+<script>
+// ✅ Check paid orders and show downloads
+function checkDownloads(){
+  const ref = document.getElementById("orderRef").value.trim();
+  if(!ref){alert("Enter your order reference"); return;}
+
+  const orders = JSON.parse(localStorage.getItem("orders")||"[]");
+  const order = orders.find(o=>o.ref===ref && o.paid);
+  if(!order){alert("Order not found or not paid yet"); return;}
+
+  let html="";
+  order.items.forEach(item=>{
+    if(item.type==="digital"){
+      html+=`<a href="${item.download}" download><button>Download ${item.title}</button></a><br><br>`;
+    }
+  });
+
+  if(html){
+    document.getElementById("downloads").classList.remove("hidden");
+    document.getElementById("downloadLinks").innerHTML=html;
+  } else alert("No digital items in this order");
+}
+</script>
+
+</body>
+</html>
