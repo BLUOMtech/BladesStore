@@ -14,6 +14,7 @@ button{padding:10px;border:none;border-radius:8px;background:#222;color:#fff;mar
 #cart{position:fixed;right:0;top:0;width:320px;height:100%;background:#fff;box-shadow:-3px 0 8px rgba(0,0,0,.2);padding:20px;overflow:auto;transform:translateX(100%);transition:.3s}
 #cart.open{transform:translateX(0)}
 .box{background:#fafafa;padding:10px;border-radius:10px;margin-top:10px;font-size:14px}
+#downloadsBox{display:none;padding:20px;background:#fff;margin:20px;border-radius:12px;box-shadow:0 4px 8px rgba(0,0,0,.1)}
 </style>
 </head>
 <body>
@@ -23,7 +24,9 @@ button{padding:10px;border:none;border-radius:8px;background:#222;color:#fff;mar
 <button onclick="toggleCart()">Cart (<span id="cartCount">0</span>)</button>
 </nav>
 
-<div class="grid" id="shop"></div>
+<div id="shopPage">
+  <div class="grid" id="shop"></div>
+</div>
 
 <div id="cart">
 <h3>Your Cart</h3>
@@ -38,6 +41,11 @@ button{padding:10px;border:none;border-radius:8px;background:#222;color:#fff;mar
   <p>Send payment, then click below:</p>
   <button onclick="placeOrder()">I Have Paid</button>
 </div>
+</div>
+
+<div id="downloadsBox">
+<h3>Your Digital Downloads</h3>
+<div id="downloadLinks"></div>
 </div>
 
 <script>
@@ -90,14 +98,39 @@ function placeOrder(){
   orders.push({
     ref: localStorage.getItem("currentOrderRef"),
     items: cart,
-    paid:false
+    paid:false,
+    refunded:false
   });
   localStorage.setItem("orders",JSON.stringify(orders));
-  alert("Order placed! Tell the owner your reference.");
+  alert("Order placed! Give the reference to the owner.");
   cart=[];
   saveCart();
   document.getElementById("payBox").style.display="none";
 }
+
+// ----- DOWNLOADS -----
+function showDownloads(ref){
+  const orders = JSON.parse(localStorage.getItem("orders")||"[]");
+  const order = orders.find(o=>o.ref===ref && o.paid);
+  if(!order){alert("Order not found or not paid yet"); return;}
+  let html="";
+  order.items.forEach(item=>{
+    if(item.type==="digital"){
+      let href = item.image.startsWith("data:") ? item.image : item.download;
+      html+=`<a href="${href}" download="${item.title}"><button>Download ${item.title}</button></a><br><br>`;
+    }
+  });
+  if(html){
+    document.getElementById("downloadsBox").style.display="block";
+    document.getElementById("downloadLinks").innerHTML=html;
+  }
+}
+
+// ----- LIVE ORDER CHECK -----
+setInterval(()=>{
+  const currentRef=localStorage.getItem("currentOrderRef");
+  if(currentRef) showDownloads(currentRef);
+},2000);
 
 // ----- INITIALIZE -----
 renderShop();
