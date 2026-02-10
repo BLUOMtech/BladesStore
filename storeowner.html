@@ -11,7 +11,7 @@ input, select, textarea{width:100%;padding:10px;margin:5px 0;border-radius:8px;b
 button{padding:10px;width:100%;border:none;border-radius:8px;background:#222;color:#fff;cursor:pointer;margin-top:5px}
 .hidden{display:none}
 .card{background:#fff;padding:10px;border-radius:10px;margin:10px 0}
-.flex{display:flex;gap:10px;flex-wrap:wrap}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:10px 20px;border-radius:8px;display:none;z-index:1000;}
 </style>
 </head>
 <body>
@@ -52,7 +52,17 @@ button{padding:10px;width:100%;border:none;border-radius:8px;background:#222;col
   <div id="ordersList"></div>
 </div>
 
+<div id="toast"></div>
+
 <script>
+// ----- TOAST NOTIFICATIONS -----
+function showToast(msg){
+  const t=document.getElementById("toast");
+  t.innerText=msg;
+  t.style.display="block";
+  setTimeout(()=>{t.style.display="none";},3000);
+}
+
 // ----- Simple Hasher -----
 const BPhashIt = {
   hashit: function(str){
@@ -80,14 +90,15 @@ function login(){
     document.getElementById("ownerPanel").classList.remove("hidden");
     renderProducts();
     renderOrders();
-    alert("Login successful!");
-  } else alert("Incorrect login");
+    showToast("Login successful!");
+  } else showToast("Incorrect login");
 }
 
 function logout(){
   document.getElementById("ownerPanel").classList.add("hidden");
   document.getElementById("loginBox").classList.remove("hidden");
   email.value=""; password.value="";
+  showToast("Logged out");
 }
 
 // ----- Change login -----
@@ -96,8 +107,8 @@ function changeCredentials(){
     localStorage.setItem("ownerEmail", BPhashIt.hashit(newEmail.value));
     localStorage.setItem("ownerPass", BPhashIt.hashit(newPass.value));
     newEmail.value=""; newPass.value="";
-    alert("Credentials updated! Logout and login again.");
-  } else alert("Enter both email and password");
+    showToast("Credentials updated! Logout and login again.");
+  } else showToast("Enter both email and password");
 }
 
 // ----- Products -----
@@ -121,7 +132,7 @@ function saveProduct(){
     saveProducts(products);
     renderProducts();
     resetForm();
-    alert("Product saved!");
+    showToast("Product saved!");
   }
 
   if(file){
@@ -131,7 +142,7 @@ function saveProduct(){
   } else if(imageURL.value){
     finalize(imageURL.value);
   } else {
-    alert("Please provide image file or URL");
+    showToast("Please provide image file or URL");
   }
 }
 
@@ -151,6 +162,7 @@ function deleteProduct(id){
     products=products.filter(p=>p.id!==id);
     saveProducts(products);
     renderProducts();
+    showToast("Product deleted");
   }
 }
 
@@ -191,18 +203,20 @@ function renderOrders(){
 }
 
 // ----- Live orders update -----
-setInterval(renderOrders,1000); // re-renders orders every 1 second
+setInterval(renderOrders,1000);
 function markPaid(i){
   let orders=getOrders();
   orders[i].paid=true;
   saveOrders(orders);
   renderOrders();
+  showToast("Order marked as Paid");
 }
 function markRefund(i){
   let orders=getOrders();
   orders[i].refunded=true;
   saveOrders(orders);
   renderOrders();
+  showToast("Order marked as Refunded");
 }
 function deleteOrder(i){
   if(confirm("Delete this order?")){
@@ -210,6 +224,7 @@ function deleteOrder(i){
     orders.splice(i,1);
     saveOrders(orders);
     renderOrders();
+    showToast("Order deleted");
   }
 }
 </script>
